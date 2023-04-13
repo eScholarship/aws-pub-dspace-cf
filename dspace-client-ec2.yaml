@@ -1,0 +1,18 @@
+---
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: DSpace API EC2 instance
+
+Resources:
+  MyEnvironmentEC2:
+    Type: "AWS::Cloud9::EnvironmentEC2"
+    Properties:
+      InstanceType: CHANGEME
+
+Outputs:
+  MyEnvironmentEC2Arn:
+    Value: !GetAtt MyEnvironmentEC2.Arn
+
+  MyEnvironmentEC2Name:
+    Value: !GetAtt MyEnvironmentEC2.Name
