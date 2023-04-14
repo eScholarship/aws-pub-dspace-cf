@@ -1,18 +1,118 @@
 ---
-
-AWSTemplateFormatVersion: "2010-09-09"
-
-Description: DSpace API EC2 instance
-
-Resources:
-  MyEnvironmentEC2:
-    Type: "AWS::Cloud9::EnvironmentEC2"
-    Properties:
-      InstanceType: CHANGEME
-
-Outputs:
-  MyEnvironmentEC2Arn:
-    Value: !GetAtt MyEnvironmentEC2.Arn
-
-  MyEnvironmentEC2Name:
-    Value: !GetAtt MyEnvironmentEC2.Name
+  AWSTemplateFormatVersion: "2010-09-09"
+  
+  Description: DSpace UI/Client EC2 instance
+  
+  # TODO: provision this EC instance using Ansible-pull: https://www.google.com/amp/s/hangarau.space/automatically-configuring-ec2-instance-from-cloudformation-using-ansible-in-pull-mode/amp/
+  
+  Metadata:
+    License: 'BSD 3-Clause'
+  
+  Parameters:
+    EnvType:
+      Description: Environment type.
+      Default: dev
+      Type: String
+      AllowedValues: [prd, dev, stg]
+      ConstraintDescription: must specify prod, dev, or stg.
+    KeyName:
+        ConstraintDescription: must be the name of an existing EC2 KeyPair.
+        Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+        Type: AWS::EC2::KeyPair::KeyName
+    InstanceType:
+      AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - t3.small
+      - t3.medium
+      - t3.large
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - cc2.8xlarge
+      ConstraintDescription: must be a valid EC2 instance type, with oomph
+      Default: t3.medium
+      Description: DSpace Client/UI Server EC2 instance type
+      Type: String
+    DSpaceClientAmi:
+      ConstraintDescription: must be a valid AMI, to which we have permissions to use
+      Default: ami-05e6eb37e1a56b1f5
+      Description: AMI ID to use for this DSpace Client Instance
+      Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+  
+  Resources:
+    DSpaceClientServer:
+      Type: AWS::EC2::Instance
+      Properties:
+        InstanceType: !Ref 'InstanceType'
+        KeyName: !Ref 'KeyName'
+        ImageId: !Ref 'DSpaceClientAmi'
+        Tags: 
+          # TODO: these probably should ALL be parameters, but I"m feeling lazy
+          - Key: "Program"
+            Value: "pub"
+          - Key: "Service"
+            Value: "dspace"
+          - Key: "Environment"
+            Value: !Ref 'EnvType'
+  
+  Outputs:
+    InstanceId:
+      Description: InstanceId of the newly created EC2 instance
+      Value: !Ref 'DSpaceClientServer'
+    AZ:
+      Description: Availability Zone of the newly created EC2 instance
+      Value: !GetAtt [DSpaceClientServer, AvailabilityZone]
+    PublicDNS:
+      Description: Public DNSName of the newly created EC2 instance
+      Value: !GetAtt [DSpaceClientServer, PublicDnsName]
+    PublicIP:
+      Description: Public IP address of the newly created EC2 instance
+      Value: !GetAtt [DSpaceClientServer, PublicIp]
+  
