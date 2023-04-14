@@ -1,10 +1,20 @@
 ---
-
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: DSpace API EC2 instance
 
+# TODO: provision this EC instance using Ansible-pull: https://www.google.com/amp/s/hangarau.space/automatically-configuring-ec2-instance-from-cloudformation-using-ansible-in-pull-mode/amp/
+
+Metadata:
+  License: 'BSD 3-Clause'
+
 Parameters:
+  EnvType:
+    Description: Environment type.
+    Default: dev
+    Type: String
+    AllowedValues: [prd, dev, stg]
+    ConstraintDescription: must specify prod, dev, or stg.
   KeyName:
       ConstraintDescription: must be the name of an existing EC2 KeyPair.
       Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
@@ -17,6 +27,9 @@ Parameters:
     - t2.small
     - t2.medium
     - t2.large
+    - t3.small
+    - t3.medium
+    - t3.large
     - m1.small
     - m1.medium
     - m1.large
@@ -60,12 +73,10 @@ Parameters:
     - d2.2xlarge
     - d2.4xlarge
     - d2.8xlarge
-    - hi1.4xlarge
     - hs1.8xlarge
     - cr1.8xlarge
     - cc2.8xlarge
-    - cg1.4xlarge
-    ConstraintDescription: must be a valid EC2 instance type.
+    ConstraintDescription: must be a valid EC2 instance type, with oomph
     Default: t3.large
     Description: DSpace API Server EC2 instance type
     Type: String
@@ -73,18 +84,34 @@ Parameters:
     ConstraintDescription: must be a valid AMI, to which we have permissions to use
     Default: ami-003203a9ddedb9900
     Description: AMI ID to use for this DSpace API Instance
-    Type: String
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
 
 Resources:
   DSpaceAPIServer:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref DSpaceApiAmi
-
+      InstanceType: !Ref 'InstanceType'
+      KeyName: !Ref 'KeyName'
+      ImageId: !Ref 'DSpaceApiAmi'
+      Tags: 
+        # TODO: these probably should ALL be parameters, but I"m feeling lazy
+        - Key: "Program"
+          Value: "pub"
+        - Key: "Service"
+          Value: "dspace"
+        - Key: "Environment"
+          Value: !Ref 'EnvType'
 
 Outputs:
-  MyEnvironmentEC2Arn:
-    Value: !GetAtt MyEnvironmentEC2.Arn
-
-  MyEnvironmentEC2Name:
-    Value: !GetAtt MyEnvironmentEC2.Name
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref 'DSpaceAPIServer'
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt [DSpaceAPIServer, AvailabilityZone]
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt [DSpaceAPIServer, PublicDnsName]
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt [DSpaceAPIServer, PublicIp]
