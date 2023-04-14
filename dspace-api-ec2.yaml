@@ -85,6 +85,18 @@ Parameters:
     Default: ami-003203a9ddedb9900
     Description: AMI ID to use for this DSpace API Instance
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+  CDLprogram:
+    Default: pub
+    Description: three-letter designation of the CDL program that owns this instance
+    Type: String
+  CDLservice:
+    Default: dspace
+    Description: designation for the service this instance provides
+    Type: String
+  function:
+    Default: api
+    Description: designation for the function or purpose of this instance
+    Type: String
 
 Resources:
   DSpaceAPIServer:
@@ -94,13 +106,19 @@ Resources:
       KeyName: !Ref 'KeyName'
       ImageId: !Ref 'DSpaceApiAmi'
       Tags: 
-        # TODO: these probably should ALL be parameters, but I"m feeling lazy
         - Key: "Program"
-          Value: "pub"
+          Value: !Ref 'CDLprogram'
         - Key: "Service"
-          Value: "dspace"
+          Value: !Ref 'CDLservice'
         - Key: "Environment"
           Value: !Ref 'EnvType'
+        - Key: "Name"
+          Value: !Join
+            - '-'
+            - - !Ref 'CDLprogram'
+              - !Ref 'CDLservice'
+              - !Ref 'function'
+              - !Ref 'EnvType'
 
 Outputs:
   InstanceId:
