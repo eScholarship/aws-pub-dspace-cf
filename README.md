@@ -2,9 +2,8 @@
 
 A collection of Cloudformation templates for use in provisioning a DSpace 7 front-end and back-end in AWS.
 
-| :exclamation:  WARNING!                                                        |
-|--------------------------------------------------------------------------------|
-| this is a work in progress, has not been tested, and most likely does not work.|
+> **Warning**
+> **this is a work in progress, has not been tested, and most likely does not work.**
 
 ## Installation
 
