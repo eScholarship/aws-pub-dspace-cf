@@ -3,7 +3,11 @@
 A collection of Cloudformation templates for use in provisioning a DSpace 7 front-end and back-end in AWS.
 
 > **Warning**
-> **this is a work in progress, has not been tested, and most likely does not work.**
+> **this is a work in progress, has not been tested, and most likely does not
+> work.**
+
+![build status](https://github.com/escholarship/aws-pub-dspace-cf/actions/workflows/cfn-lint.yml/badge.svg?branch=main)
+
 
 ## Installation
 
