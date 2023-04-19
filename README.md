@@ -7,7 +7,7 @@ A collection of Cloudformation templates for use in provisioning a DSpace 7 fron
 > work.**
 
 [![Build
-Status](https://github.com/eScholarship/aws-pub-dspace-cf/workflows/cfn-lint/badge.svg)](https://github.com/eScholarship/aws-pub-dspace-cf/actions?query=workflow%3ALint)
+Status](https://github.com/eScholarship/aws-pub-dspace-cf/workflows/Lint/badge.svg)](https://github.com/eScholarship/aws-pub-dspace-cf/actions?query=workflow%3ALint)
 
 
 
