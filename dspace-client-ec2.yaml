@@ -9,10 +9,6 @@
     License: 'BSD 3-Clause'
   
   Parameters:
-    Name:
-      Description: Instance Name.
-      Default: pub-dspace-dev
-      Type: String
     EnvType:
       Description: Environment type.
       Default: dev
