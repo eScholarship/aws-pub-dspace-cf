@@ -1,4 +1,4 @@
-name: Lint CloudFormation Templates
+name: Lint
 on:
   push:
     # only trigger on branches, not tags
