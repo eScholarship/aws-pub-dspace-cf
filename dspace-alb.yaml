@@ -1,1 +1,75 @@
-# TODO: draft this ALB template
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template for creating an Application Load Balancer"
+
+Parameters:
+  LoadBalancerName:
+    Type: String
+    Description: "Name of the Application Load Balancer"
+    MinLength: '1'
+    MaxLength: '32'
+    ConstraintDescription: "The name must be between 1 and 32 characters in length"
+  EnvType:
+    Type: String
+    Description: "The type of environment (e.g. prd, stg, dev)"
+    AllowedValues: [prd, dev, stg]
+    ConstraintDescription: "must specify prd, dev, or stg."
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Select the VPC where you want to deploy the load balancer and its associated resources.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of Subnet IDs for the ALB
+    ConstraintDescription: Must be a list of valid subnet IDs
+
+Resources:
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref LoadBalancerName
+      Scheme: internet-facing
+      Subnets: !Ref SubnetIds
+      Type: application
+      Tags:
+        - Key: Name
+          Value: !Ref LoadBalancerName
+        - Key: EnvType
+          Value: !Ref EnvType
+
+          
+  SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Security group for the Application Load Balancer"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
+      GroupName: !Sub "${LoadBalancerName}-sg"
+      Tags:
+        - Key: Name
+          Value: !Sub "${LoadBalancerName}-sg"
+        - Key: EnvType
+          Value: !Ref EnvType
+
+  ListenerHttps:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: 'text/plain'
+            MessageBody: 'Hello world!'
+            StatusCode: '200'
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234"
+
