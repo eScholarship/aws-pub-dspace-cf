@@ -1,0 +1,80 @@
+---
+  AWSTemplateFormatVersion: '2010-09-09'
+  Description: Template for creating security groups for the load balancer and EC2 instances
+  
+  #TODO: Add CDL parameters for constructing appropriate names and tags
+  #TODO: Use CDL parameters in all names
+  #TODO: Add tags where necessary
+
+  Parameters:
+    VpcId:
+      Type: AWS::EC2::VPC::Id
+      Description: VPC ID for the security groups
+  
+  Resources:
+    LoadBalancerSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        VpcId: !Ref VpcId
+        GroupName: LoadBalancerSecurityGroup
+        GroupDescription: Security group for the load balancer
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: 0.0.0.0/0
+  
+    ApiInstanceSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        VpcId: !Ref VpcId
+        GroupName: ApiInstanceSecurityGroup
+        GroupDescription: Security group for the API instance
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 8080
+            ToPort: 8080
+            SourceSecurityGroupId: !ImportValue "ApiInstanceSecurityGroupId"
+        SecurityGroupEgress:
+          - IpProtocol: '-1'
+            FromPort: '-1'
+            ToPort: '-1'
+            CidrIp: 0.0.0.0/0
+  
+    ClientInstanceSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        VpcId: !Ref VpcId
+        GroupName: ClientInstanceSecurityGroup
+        GroupDescription: Security group for the client instance
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            SourceSecurityGroupId: !ImportValue "LoadBalancerSecurityGroupId"
+        SecurityGroupEgress:
+          - IpProtocol: '-1'
+            FromPort: '-1'
+            ToPort: '-1'
+            CidrIp: 0.0.0.0/0
+  
+  Outputs:
+    LoadBalancerSecurityGroupId:
+      Value: !Ref LoadBalancerSecurityGroup
+      Export:
+        Name: LoadBalancerSecurityGroupId
+  
+    ApiInstanceSecurityGroupId:
+      Value: !Ref ApiInstanceSecurityGroup
+      Export:
+        Name: ApiInstanceSecurityGroupId
+  
+    ClientInstanceSecurityGroupId:
+      Value: !Ref ClientInstanceSecurityGroup
+      Export:
+        Name: ClientInstanceSecurityGroupId
+  

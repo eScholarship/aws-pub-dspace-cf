@@ -1,42 +1,89 @@
 ---
-  AWSTemplateFormatVersion: '2010-09-09'
   Parameters:
-    EnvType:
-      Description: Environment type (e.g. prod, stage, dev)
-      Type: String
-    CDLprogram:
-      Description: Name of the CDL program
-      Type: String
-    CDLservice:
-      Description: Name of the CDL service
-      Type: String
     VpcId:
-      Description: ID of the VPC that the instances will be launched in
       Type: AWS::EC2::VPC::Id
+      Description: The VPC ID where the load balancer will be created
     SubnetIds:
-      Description: Comma-separated list of subnet IDs to launch the instances in
       Type: List<AWS::EC2::Subnet::Id>
-    SecurityGroupId:
-      Description: ID of the security group that allows inbound traffic to the instances
+      Description: A list of subnet IDs where the load balancer will be created
+    LoadBalancerName:
+      Type: String
+      Description: A name for the load balancer
+    CertificateArn:
+      Type: String
+      Description: The ARN of the SSL/TLS certificate to use for HTTPS listener
+    ApiInstancePort:
+      Type: Number
+      Description: The port number to forward /server/* and /server URL patterns to on the API instance
+    ClientInstancePort:
+      Type: Number
+      Description: The port number to forward all other URL patterns to on the client instance
+    InstanceSecurityGroup:
       Type: AWS::EC2::SecurityGroup::Id
-    KeyName:
-      Description: Name of the EC2 key pair to use for SSH access to the instances
-      Type: AWS::EC2::KeyPair::KeyName
-    InstanceType:
-      Description: Instance type for the EC2 instances
-      Type: String
-      Default: t2.micro
-      AllowedValues:
-        - t2.micro
-        - t2.small
-        - t2.medium
-    AMI:
-      Description: ID of the AMI to use for the EC2 instances
-      Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-      Default: /aws/service/amazon-linux-ami.latest.amazon-linux-2-x86_64
-    SSLCertificateArn:
-      Description: ARN of the SSL certificate for HTTPS listener
-      Type: String
+      Description: The ID of the security group to apply to both the API and client instances
+    LoadBalancerSecurityGroup:
+      Type: AWS::EC2::SecurityGroup::Id
+      Description: The ID of the security group to apply to the load balancer
+    
   
-  TODO: Add any additional parameters needed for the load balancer and reverse proxy setup
+  # TODO: 2. Create the security groups needed for the load balancer and the EC2
+  # TODO: 2.a refactor these security group definitions into a separate
+  # template, so they can be imported wherever they are needed
+  # you reference these security groups in other templates by using the Fn::ImportValue function, which imports the value of an output exported by another stack 
+  # instances. The short code for this function is !ImportValue, here's an
+  # example: !ImportValue MyStack-MyOutput
+  Resources:
+    LoadBalancerSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for the load balancer
+        VpcId: !Ref VpcId
+        Tags:
+          - Key: "Name"
+            Value: !Join ["-", ["lb", !Ref EnvType, !Ref CDLprogram, !Ref CDLservice, "sg"]]
+          - Key: "EnvType"
+            Value: !Ref EnvType
+          - Key: "CDLprogram"
+            Value: !Ref CDLprogram
+          - Key: "CDLservice"
+            Value: !Ref CDLservice
+  
+    ClientInstanceSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for the client EC2 instance
+        VpcId: !Ref VpcId
+        Tags:
+          - Key: "Name"
+            Value: !Join ["-", ["client", !Ref EnvType, !Ref CDLprogram, !Ref CDLservice, "sg"]]
+          - Key: "EnvType"
+            Value: !Ref EnvType
+          - Key: "CDLprogram"
+            Value: !Ref CDLprogram
+          - Key: "CDLservice"
+            Value: !Ref CDLservice
+  
+    ApiInstanceSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for the API EC2 instance
+        VpcId: !Ref VpcId
+        Tags:
+          - Key: "Name"
+            Value: !Join ["-", ["api", !Ref EnvType, !Ref CDLprogram, !Ref CDLservice, "sg"]]
+          - Key: "EnvType"
+            Value: !Ref EnvType
+          - Key: "CDLprogram"
+            Value: !Ref CDLprogram
+          - Key: "CDLservice"
+            Value: !Ref CDLservice
+  
+  
+  # TODO: 3. Create the load balancer and define its listeners and target groups
+  
+  # TODO: 4. Create the EC2 instances and attach them to the target groups
+  
+  # TODO: 5. Add tags to the resources for better organization and management
+  
+  # TODO: 6. Output the load balancer DNS name for easier access
   
