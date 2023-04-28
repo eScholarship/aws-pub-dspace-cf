@@ -71,5 +71,11 @@ Resources:
       Protocol: HTTPS
       SslPolicy: ELBSecurityPolicy-2016-08
       Certificates:
+        # placeholder CertificateArn, use a real one, provided by a parameter
         - CertificateArn: "arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234"
 
+# TODO: add listener resources
+# TODO: add target group resources
+# TODO: add DNS record resources
+# TODO: add certificate resources
+# TODO: add security group rules for the instance group
