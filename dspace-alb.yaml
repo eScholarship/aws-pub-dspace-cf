@@ -29,7 +29,7 @@ Parameters:
     Description: designation for the service this instance provides
     Type: String
   function:
-    Default: client
+    Default: load-balancer
     Description: designation for the function or purpose of this instance
     Type: String
 
