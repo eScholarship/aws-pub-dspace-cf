@@ -56,6 +56,7 @@ Resources:
           Value: !Sub "${LoadBalancerName}-sg"
         - Key: EnvType
           Value: !Ref EnvType
+    # TODO: Add target group resources
 
   # TODO: Add Listener resources here
   ListenerHttps:
@@ -74,6 +75,6 @@ Resources:
       Certificates:
         # placeholder CertificateArn, use a real one, provided by a parameter
         - CertificateArn: "arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234"
-# TODO: add target group resources
+
 # TODO: add DNS record resources
 # TODO: add certificate resources
