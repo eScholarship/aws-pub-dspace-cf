@@ -1,4 +1,7 @@
 ---
+  AWSTemplateFormatVersion: '2010-09-09'
+  Description: Template for creating our DSpace reverse proxy/load balancer
+
   Parameters:
     VpcId:
       Type: AWS::EC2::VPC::Id
@@ -24,62 +27,104 @@
     LoadBalancerSecurityGroup:
       Type: AWS::EC2::SecurityGroup::Id
       Description: The ID of the security group to apply to the load balancer
-    
-  
-  # TODO: 2. Create the security groups needed for the load balancer and the EC2
-  # TODO: 2.a refactor these security group definitions into a separate
-  # template, so they can be imported wherever they are needed
-  # you reference these security groups in other templates by using the Fn::ImportValue function, which imports the value of an output exported by another stack 
-  # instances. The short code for this function is !ImportValue, here's an
-  # example: !ImportValue MyStack-MyOutput
+
   Resources:
-    LoadBalancerSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
+    # 1. Create the Elastic Load Balancer resource
+    LoadBalancer:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
       Properties:
-        GroupDescription: Security group for the load balancer
-        VpcId: !Ref VpcId
-        Tags:
-          - Key: "Name"
-            Value: !Join ["-", ["lb", !Ref EnvType, !Ref CDLprogram, !Ref CDLservice, "sg"]]
-          - Key: "EnvType"
-            Value: !Ref EnvType
-          - Key: "CDLprogram"
-            Value: !Ref CDLprogram
-          - Key: "CDLservice"
-            Value: !Ref CDLservice
+        Name: !Ref LoadBalancerName
+        Scheme: internet-facing
+        Type: application
+        IpAddressType: ipv4
+        SecurityGroups:
+          - !ImportValue SecurityGroupELB
+        Subnets: !Split [",", !Ref SubnetIds]
   
-    ClientInstanceSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
+    # 2: Create target groups for the API and client instances
+    APITargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
       Properties:
-        GroupDescription: Security group for the client EC2 instance
+        Name: !Join [ "-", [ !Ref LoadBalancerName, "api-target-group" ] ]
+        Port: 8080
+        Protocol: HTTP
+        TargetType: instance
         VpcId: !Ref VpcId
-        Tags:
-          - Key: "Name"
-            Value: !Join ["-", ["client", !Ref EnvType, !Ref CDLprogram, !Ref CDLservice, "sg"]]
-          - Key: "EnvType"
-            Value: !Ref EnvType
-          - Key: "CDLprogram"
-            Value: !Ref CDLprogram
-          - Key: "CDLservice"
-            Value: !Ref CDLservice
+        HealthCheckIntervalSeconds: 30
+        HealthCheckPath: /api/health
+        HealthCheckProtocol: HTTP
+        HealthCheckTimeoutSeconds: 5
+        HealthyThresholdCount: 2
+        UnhealthyThresholdCount: 5
   
-    ApiInstanceSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
+    ClientTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
       Properties:
-        GroupDescription: Security group for the API EC2 instance
+        Name: !Join [ "-", [ !Ref LoadBalancerName, "client-target-group" ] ]
+        Port: 443
+        Protocol: HTTPS
+        TargetType: instance
         VpcId: !Ref VpcId
-        Tags:
-          - Key: "Name"
-            Value: !Join ["-", ["api", !Ref EnvType, !Ref CDLprogram, !Ref CDLservice, "sg"]]
-          - Key: "EnvType"
-            Value: !Ref EnvType
-          - Key: "CDLprogram"
-            Value: !Ref CDLprogram
-          - Key: "CDLservice"
-            Value: !Ref CDLservice
+        HealthCheckIntervalSeconds: 30
+        HealthCheckPath: /health
+        HealthCheckProtocol: HTTPS
+        HealthCheckTimeoutSeconds: 5
+        HealthyThresholdCount: 2
+        UnhealthyThresholdCount: 5
   
-  
-  # TODO: 3. Create the load balancer and define its listeners and target groups
+    # 3: Create listeners for the load balancer
+    ListenerHttp:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        DefaultActions:
+          - Type: redirect
+            RedirectConfig:
+              Host: "#{host}"
+              Path: "/#{path}?#{query}"
+              Port: "443"
+              Protocol: "HTTPS"
+              Query: "#{query}"
+              StatusCode: HTTP_301
+        LoadBalancerArn: !Ref LoadBalancer
+        Port: 80
+        Protocol: HTTP
+      
+    ListenerHttps:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        DefaultActions:
+          - Type: fixed-response
+            FixedResponseConfig:
+              ContentType: text/plain
+              MessageBody: "Healthy"
+              StatusCode: 200
+        LoadBalancerArn: !Ref LoadBalancer
+        Port: 443
+        Protocol: HTTPS
+        SslPolicy: ELBSecurityPolicy-2016-08
+        Certificates:
+          - CertificateArn: !Ref CertificateArn
+        Rules:
+          - Priority: 1
+            Conditions:
+              - Field: path-pattern
+                Values:
+                  - /server/*
+                  - /server
+            Actions:
+              - Type: forward
+                TargetGroupArn: !Ref APITargetGroup
+          - Priority: 2
+            Actions:
+              - Type: forward
+                TargetGroupArn: !Ref ClientTargetGroup
+      
+
+
+
+        ### remaining TODOs ####################################################
+        ### TODO: Add health checks
+        ### TODO: Add tags  
   
   # TODO: 4. Create the EC2 instances and attach them to the target groups
   
