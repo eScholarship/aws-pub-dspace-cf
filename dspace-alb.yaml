@@ -35,7 +35,7 @@ Resources:
         - Key: EnvType
           Value: !Ref EnvType
 
-          
+  # TODO: Add Security Group resources here
   SecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
@@ -57,6 +57,7 @@ Resources:
         - Key: EnvType
           Value: !Ref EnvType
 
+  # TODO: Add Listener resources here
   ListenerHttps:
     Type: "AWS::ElasticLoadBalancingV2::Listener"
     Properties:
@@ -73,9 +74,6 @@ Resources:
       Certificates:
         # placeholder CertificateArn, use a real one, provided by a parameter
         - CertificateArn: "arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-abcd-1234-abcd-1234abcd1234"
-
-# TODO: add listener resources
 # TODO: add target group resources
 # TODO: add DNS record resources
 # TODO: add certificate resources
-# TODO: add security group rules for the instance group
