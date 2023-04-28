@@ -14,7 +14,7 @@
       Default: dev
       Type: String
       AllowedValues: [prd, dev, stg]
-      ConstraintDescription: must specify prod, dev, or stg.
+      ConstraintDescription: must specify prd, dev, or stg.
     KeyName:
         ConstraintDescription: must be the name of an existing EC2 KeyPair.
         Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
