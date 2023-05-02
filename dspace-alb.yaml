@@ -12,6 +12,9 @@
     LoadBalancerName:
       Type: String
       Description: A name for the load balancer
+    DSpaceEIP:
+      Type: String
+      Default: EIP allocation ID or IP address for this DSpace site
     DomainName:
       Type: String
       Description: the domain name for this DSpace site
@@ -37,6 +40,7 @@
       ClientInstancePort: !Ref ClientInstancePort
       InstanceSecurityGroup: !Ref InstanceSecurityGroup
       LoadBalancerSecurityGroup: !Ref LoadBalancerSecurityGroup
+      DSpaceEIP: !Ref DSpaceEIP
 
   Resources:
     # 1. Create the Elastic Load Balancer resource
