@@ -153,11 +153,6 @@
 
         ### remaining TODOs ####################################################
         ### TODO: Add health checks
-        ### TODO: Add tags  
-  
-  # TODO: 4. Create the EC2 instances and attach them to the target groups
-  
-  # TODO: 5. Add tags to the resources for better organization and management
-  
-  # TODO: 6. Output the load balancer DNS name for easier access
+        ### TODO: Add tags 
+        ### TODO: Output something when the load balancer is created
   
