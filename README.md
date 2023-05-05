@@ -61,11 +61,15 @@ file://dspace-client-ec2.yaml --parameters #TODO
 ### Create the Load Balancer
 ```aws cloudformation create-stack --stack-name DSpaceLoadBalancer --template-body
 file://dspace-alb.yaml --parameters
-ParameterKey=EIP,ParameterValue=<eip-address>
 ParameterKey=CertificateArn,ParameterValue=<certificate-arn> --region
 <region>```
 
 Replace <eip-address> with the EIP address you created earlier, <certificate-arn> with the ARN of the SSL certificate, and <region> with the AWS region you want to create the stack in.
+
+### Associate the EIP with the Load Balancer
+After the load balancer has been created, you need to associate the EIP with the load balancer. You can do this with the AWS CLI:
+```aws elbv2 associate-load-balancer-with-ip-address --load-balancer-arn <load_balancer_arn> --ip-address <eip_allocation_id>
+```
 
 ## Contributing
 

@@ -10,13 +10,31 @@
     VpcId:
       Type: AWS::EC2::VPC::Id
       Description: VPC ID for the security groups
+    EnvType:
+      Type: String
+      Description: Environment type.
+      Default: dev
+      AllowedValues: [prd, dev, stg]
+      ConstraintDescription: must specify prd, dev, or stg
+    CDLprogram:
+      Type: String
+      Default: pub
+      Description: three-letter designation of the CDL program that owns this instance
+    CDLservice:
+      Type: String
+      Default: dspace
+      Description: designation for the service this instance provides
+    function:
+      Type: String
+      Default: sg
+      Description: designation for the function or purpose of this stack
   
   Resources:
-    LoadBalancerSecurityGroup:
+    DSpaceLoadBalancerSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
         VpcId: !Ref VpcId
-        GroupName: LoadBalancerSecurityGroup
+        GroupName: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, !Ref function, !Ref EnvType ] ]
         GroupDescription: Security group for the load balancer
         SecurityGroupIngress:
           - IpProtocol: tcp
@@ -55,7 +73,7 @@
           - IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            SourceSecurityGroupId: !ImportValue "LoadBalancerSecurityGroupId"
+            SourceSecurityGroupId: !ImportValue "DSpaceLoadBalancerSecurityGroupId"
         SecurityGroupEgress:
           - IpProtocol: '-1'
             FromPort: '-1'
@@ -63,10 +81,10 @@
             CidrIp: 0.0.0.0/0
   
   Outputs:
-    LoadBalancerSecurityGroupId:
-      Value: !Ref LoadBalancerSecurityGroup
+    DSpaceLoadBalancerSecurityGroupId:
+      Value: !Ref DSpaceLoadBalancerSecurityGroup
       Export:
-        Name: LoadBalancerSecurityGroupId
+        Name: DSpaceLoadBalancerSecurityGroupId
   
     ApiInstanceSecurityGroupId:
       Value: !Ref ApiInstanceSecurityGroup
