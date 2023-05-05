@@ -9,9 +9,24 @@
     SubnetIds:
       Type: List<AWS::EC2::Subnet::Id>
       Description: A list of subnet IDs where the load balancer will be created
-    LoadBalancerName:
+    EnvType:
       Type: String
-      Description: A name for the load balancer
+      Description: Environment type.
+      Default: dev
+      AllowedValues: [prd, dev, stg]
+      ConstraintDescription: must specify prd, dev, or stg
+    CDLprogram:
+      Type: String
+      Default: pub
+      Description: three-letter designation of the CDL program that owns this instance
+    CDLservice:
+      Type: String
+      Default: dspace
+      Description: designation for the service this instance provides
+    function:
+      Type: String
+      Default: alb
+      Description: designation for the function or purpose of this stack
     DSpaceEIP:
       Type: String
       Default: EIP allocation ID or IP address for this DSpace site
@@ -47,7 +62,7 @@
     LoadBalancer:
       Type: AWS::ElasticLoadBalancingV2::LoadBalancer
       Properties:
-        Name: !Ref LoadBalancerName
+        Name: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, !Ref function, !Ref EnvType ] ]
         Scheme: internet-facing
         Type: application
         IpAddressType: ipv4
@@ -59,7 +74,7 @@
     APITargetGroup:
       Type: AWS::ElasticLoadBalancingV2::TargetGroup
       Properties:
-        Name: !Join [ "-", [ !Ref LoadBalancerName, "api-target-group" ] ]
+        Name: !Join [ "-", [ !Ref LoadBalancer, "api-target-group" ] ]
         Port: 8080
         Protocol: HTTP
         TargetType: instance
@@ -74,7 +89,7 @@
     ClientTargetGroup:
       Type: AWS::ElasticLoadBalancingV2::TargetGroup
       Properties:
-        Name: !Join [ "-", [ !Ref LoadBalancerName, "client-target-group" ] ]
+        Name: !Join [ "-", [ !Ref LoadBalancer, "client-target-group" ] ]
         Port: 443
         Protocol: HTTPS
         TargetType: instance
