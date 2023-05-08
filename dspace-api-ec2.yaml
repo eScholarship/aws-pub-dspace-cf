@@ -80,6 +80,9 @@ Parameters:
     Default: t3.large
     Description: DSpace API Server EC2 instance type
     Type: String
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: A list of subnet IDs where the load balancer will be created
   DSpaceApiAmi:
     ConstraintDescription: must be a valid AMI, to which we have permissions to use
     Default: ami-003203a9ddedb9900
@@ -105,6 +108,12 @@ Resources:
       InstanceType: !Ref 'InstanceType'
       KeyName: !Ref 'KeyName'
       ImageId: !Ref 'DSpaceApiAmi'
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - !ImportValue DSpaceApiInstanceSecurityGroup
+          SubnetId: !Select [ 0, !Ref SubnetIds ]
       Tags: 
         - Key: "Program"
           Value: !Ref 'CDLprogram'

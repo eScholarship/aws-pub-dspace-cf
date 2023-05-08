@@ -50,7 +50,7 @@
         Type: application
         IpAddressType: ipv4
         SecurityGroups:
-          - !ImportValue SecurityGroupELB
+          - !ImportValue DSpaceLoadBalancerSecurityGroup
         Subnets: !Split [",", !Ref SubnetIds]
         Tags: 
           - Key: "Program"
@@ -170,6 +170,4 @@
       Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
 
 ### remaining TODOs ####################################################
-# TODO: Verify health checks are correct
-# TODO: Add tags 
-# TODO: after I refactor the security group names, ensure they are used correctly here
+#TODO: Verify health checks are correct

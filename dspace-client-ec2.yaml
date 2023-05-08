@@ -3,7 +3,8 @@
   
   Description: DSpace UI/Client EC2 instance
   
-  # TODO: provision this EC instance using Ansible-pull: https://www.google.com/amp/s/hangarau.space/automatically-configuring-ec2-instance-from-cloudformation-using-ansible-in-pull-mode/amp/
+  # TODO: provision this EC instance using Ansible-pull:
+  # https://www.google.com/amp/s/hangarau.space/automatically-configuring-ec2-instance-from-cloudformation-using-ansible-in-pull-mode/amp/
   
   Metadata:
     License: 'BSD 3-Clause'
@@ -80,6 +81,9 @@
       Default: t3.medium
       Description: DSpace Client/UI Server EC2 instance type
       Type: String
+    SubnetIds:
+      Type: List<AWS::EC2::Subnet::Id>
+      Description: A list of subnet IDs where the load balancer will be created
     DSpaceClientAmi:
       ConstraintDescription: must be a valid AMI, to which we have permissions to use
       Default: ami-05e6eb37e1a56b1f5
@@ -97,8 +101,7 @@
       Default: client
       Description: designation for the function or purpose of this instance
       Type: String
-    
-  
+
   Resources:
     DSpaceClientServer:
       Type: AWS::EC2::Instance
@@ -106,6 +109,12 @@
         InstanceType: !Ref 'InstanceType'
         KeyName: !Ref 'KeyName'
         ImageId: !Ref 'DSpaceClientAmi'
+        NetworkInterfaces:
+          - AssociatePublicIpAddress: 'true'
+            DeviceIndex: '0'
+            GroupSet:
+              - !ImportValue DSpaceClientServerSecurityGroup
+            SubnetId: !Select [ 0, !Ref SubnetIds ]
         Tags: 
           - Key: "Program"
             Value: !Ref 'CDLprogram'

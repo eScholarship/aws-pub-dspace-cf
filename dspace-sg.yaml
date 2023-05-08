@@ -1,10 +1,6 @@
 ---
   AWSTemplateFormatVersion: '2010-09-09'
   Description: Template for creating security groups for the load balancer and EC2 instances
-  
-  #TODO: Add CDL parameters for constructing appropriate names and tags
-  #TODO: Use CDL parameters in all names
-  #TODO: Add tags where necessary
 
   Parameters:
     VpcId:
@@ -34,7 +30,7 @@
       Type: AWS::EC2::SecurityGroup
       Properties:
         VpcId: !Ref VpcId
-        GroupName: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, !Ref function, !Ref EnvType ] ]
+        GroupName: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, "alb" , !Ref function, !Ref EnvType ] ]
         GroupDescription: Security group for the load balancer
         SecurityGroupIngress:
           - IpProtocol: tcp
@@ -45,29 +41,59 @@
             FromPort: 443
             ToPort: 443
             CidrIp: 0.0.0.0/0
+        Tags: 
+          - Key: "Program"
+            Value: !Ref 'CDLprogram'
+          - Key: "Service"
+            Value: !Ref 'CDLservice'
+          - Key: "Environment"
+            Value: !Ref 'EnvType'
+          - Key: "Name"
+            Value: !Join
+              - '-'
+              - - !Ref 'CDLprogram'
+                - !Ref 'CDLservice'
+                - "alb"
+                - !Ref 'function'
+                - !Ref 'EnvType'
   
-    ApiInstanceSecurityGroup:
+    DSpaceApiInstanceSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
         VpcId: !Ref VpcId
-        GroupName: ApiInstanceSecurityGroup
+        GroupName: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, "api" , !Ref function, !Ref EnvType ] ]
         GroupDescription: Security group for the API instance
         SecurityGroupIngress:
           - IpProtocol: tcp
             FromPort: 8080
             ToPort: 8080
-            SourceSecurityGroupId: !ImportValue "ApiInstanceSecurityGroupId"
+            SourceSecurityGroupId: !ImportValue "DSpaceApiInstanceSecurityGroupId"
         SecurityGroupEgress:
           - IpProtocol: '-1'
             FromPort: '-1'
             ToPort: '-1'
             CidrIp: 0.0.0.0/0
+        Tags: 
+          - Key: "Program"
+            Value: !Ref 'CDLprogram'
+          - Key: "Service"
+            Value: !Ref 'CDLservice'
+          - Key: "Environment"
+            Value: !Ref 'EnvType'
+          - Key: "Name"
+            Value: !Join
+              - '-'
+              - - !Ref 'CDLprogram'
+                - !Ref 'CDLservice'
+                - "api"
+                - !Ref 'function'
+                - !Ref 'EnvType'
   
-    ClientInstanceSecurityGroup:
+    DSpaceClientInstanceSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
         VpcId: !Ref VpcId
-        GroupName: ClientInstanceSecurityGroup
+        GroupName: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, "client" , !Ref function, !Ref EnvType ] ]
         GroupDescription: Security group for the client instance
         SecurityGroupIngress:
           - IpProtocol: tcp
@@ -79,6 +105,21 @@
             FromPort: '-1'
             ToPort: '-1'
             CidrIp: 0.0.0.0/0
+        Tags: 
+          - Key: "Program"
+            Value: !Ref 'CDLprogram'
+          - Key: "Service"
+            Value: !Ref 'CDLservice'
+          - Key: "Environment"
+            Value: !Ref 'EnvType'
+          - Key: "Name"
+            Value: !Join
+              - '-'
+              - - !Ref 'CDLprogram'
+                - !Ref 'CDLservice'
+                - "client"
+                - !Ref 'function'
+                - !Ref 'EnvType'
   
   Outputs:
     DSpaceLoadBalancerSecurityGroupId:
@@ -86,13 +127,13 @@
       Export:
         Name: DSpaceLoadBalancerSecurityGroupId
   
-    ApiInstanceSecurityGroupId:
-      Value: !Ref ApiInstanceSecurityGroup
+    DSpaceApiInstanceSecurityGroupId:
+      Value: !Ref DSpaceApiInstanceSecurityGroup
       Export:
-        Name: ApiInstanceSecurityGroupId
+        Name: DSpaceApiInstanceSecurityGroupId
   
-    ClientInstanceSecurityGroupId:
-      Value: !Ref ClientInstanceSecurityGroup
+    DSpaceClientInstanceSecurityGroupId:
+      Value: !Ref DSpaceClientInstanceSecurityGroup
       Export:
-        Name: ClientInstanceSecurityGroupId
+        Name: DSpaceClientInstanceSecurityGroupId
   
