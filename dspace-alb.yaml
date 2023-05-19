@@ -88,12 +88,12 @@
       Properties:
         Name: !Join [ "-", [ !Ref LoadBalancer, "client-target-group" ] ]
         Port: !Ref ClientInstancePort
-        Protocol: HTTPS
+        Protocol: HTTP
         TargetType: instance
         VpcId: !Ref VpcId
         HealthCheckIntervalSeconds: 30
         HealthCheckPath: /health
-        HealthCheckProtocol: HTTPS
+        HealthCheckProtocol: HTTP
         HealthCheckTimeoutSeconds: 5
         HealthyThresholdCount: 2
         UnhealthyThresholdCount: 5

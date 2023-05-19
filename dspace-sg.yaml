@@ -97,8 +97,8 @@
         GroupDescription: Security group for the client instance
         SecurityGroupIngress:
           - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
+            FromPort: 80
+            ToPort: 80
             SourceSecurityGroupId: !ImportValue "DSpaceLoadBalancerSecurityGroupId"
         SecurityGroupEgress:
           - IpProtocol: '-1'
