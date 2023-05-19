@@ -168,6 +168,3 @@
     LoadBalancerCanonicalHostedZoneID:
       Description: Canonical hosted zone ID for the load balancer
       Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
-
-### remaining TODOs ####################################################
-#TODO: Verify health checks are correct
