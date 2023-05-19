@@ -77,7 +77,7 @@
         TargetType: instance
         VpcId: !Ref VpcId
         HealthCheckIntervalSeconds: 30
-        HealthCheckPath: /api/health
+        HealthCheckPath: /server/#/server/api
         HealthCheckProtocol: HTTP
         HealthCheckTimeoutSeconds: 5
         HealthyThresholdCount: 2
@@ -92,7 +92,7 @@
         TargetType: instance
         VpcId: !Ref VpcId
         HealthCheckIntervalSeconds: 30
-        HealthCheckPath: /health
+        HealthCheckPath: /home
         HealthCheckProtocol: HTTP
         HealthCheckTimeoutSeconds: 5
         HealthyThresholdCount: 2
