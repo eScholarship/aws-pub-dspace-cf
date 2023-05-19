@@ -1,1 +1,170 @@
-# TODO: draft this ALB template
+---
+  AWSTemplateFormatVersion: '2010-09-09'
+  Description: Template for creating our DSpace reverse proxy/load balancer
+
+  Parameters:
+    VpcId:
+      Type: AWS::EC2::VPC::Id
+      Description: The VPC ID where the load balancer will be created
+    SubnetIds:
+      Type: List<AWS::EC2::Subnet::Id>
+      Description: A list of subnet IDs where the load balancer will be created
+    EnvType:
+      Type: String
+      Description: Environment type.
+      Default: dev
+      AllowedValues: [prd, dev, stg]
+      ConstraintDescription: must specify prd, dev, or stg
+    CDLprogram:
+      Type: String
+      Default: pub
+      Description: three-letter designation of the CDL program that owns this instance
+    CDLservice:
+      Type: String
+      Default: dspace
+      Description: designation for the service this instance provides
+    function:
+      Type: String
+      Default: alb
+      Description: designation for the function or purpose of this stack
+    DomainName:
+      Type: String
+      Description: the domain name for this DSpace site
+    CertificateArn:
+      Type: String
+      Description: The ARN of the SSL/TLS certificate to use for HTTPS listener
+    ApiInstancePort:
+      Type: Number
+      Description: The port number to forward /server/* and /server URL patterns to on the API instance
+    ClientInstancePort:
+      Type: Number
+      Description: The port number to forward all other URL patterns to on the client instance
+
+  Resources:
+    # 1. Create the Elastic Load Balancer resource
+    LoadBalancer:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+      Properties:
+        Name: !Join [ "-", [ !Ref CDLprogram, !Ref CDLservice, !Ref function, !Ref EnvType ] ]
+        Scheme: internet-facing
+        Type: application
+        IpAddressType: ipv4
+        SecurityGroups:
+          - !ImportValue DSpaceLoadBalancerSecurityGroup
+        Subnets: !Split [",", !Ref SubnetIds]
+        Tags: 
+          - Key: "Program"
+            Value: !Ref 'CDLprogram'
+          - Key: "Service"
+            Value: !Ref 'CDLservice'
+          - Key: "Environment"
+            Value: !Ref 'EnvType'
+          - Key: "Name"
+            Value: !Join
+              - '-'
+              - - !Ref 'CDLprogram'
+                - !Ref 'CDLservice'
+                - !Ref 'function'
+                - !Ref 'EnvType'
+  
+    # 2: Create target groups for the API and client instances
+    APITargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties:
+        Name: !Join [ "-", [ !Ref LoadBalancer, "api-target-group" ] ]
+        Port: !Ref ApiInstancePort
+        Protocol: HTTP
+        TargetType: instance
+        VpcId: !Ref VpcId
+        HealthCheckIntervalSeconds: 30
+        HealthCheckPath: /server/#/server/api/core/collections
+        HealthCheckProtocol: HTTP
+        HealthCheckTimeoutSeconds: 5
+        HealthyThresholdCount: 2
+        UnhealthyThresholdCount: 5
+  
+    ClientTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties:
+        Name: !Join [ "-", [ !Ref LoadBalancer, "client-target-group" ] ]
+        Port: !Ref ClientInstancePort
+        Protocol: HTTP
+        TargetType: instance
+        VpcId: !Ref VpcId
+        HealthCheckIntervalSeconds: 30
+        HealthCheckPath: /home
+        HealthCheckProtocol: HTTP
+        HealthCheckTimeoutSeconds: 5
+        HealthyThresholdCount: 2
+        UnhealthyThresholdCount: 5
+  
+    # 3: Create listeners for the load balancer
+    ListenerHttp:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        DefaultActions:
+          - Type: redirect
+            RedirectConfig:
+              Host: "#{host}"
+              Path: "/#{path}?#{query}"
+              Port: "443"
+              Protocol: "HTTPS"
+              Query: "#{query}"
+              StatusCode: HTTP_301
+        LoadBalancerArn: !Ref LoadBalancer
+        Port: 80
+        Protocol: HTTP
+
+    ListenerHttps:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        LoadBalancerArn: !Ref LoadBalancer
+        Port: 443
+        Protocol: HTTPS
+        SslPolicy: ELBSecurityPolicy-2016-08
+        Certificates:
+          - CertificateArn: !Ref CertificateArn
+        DefaultActions:
+          - Type: fixed-response
+            FixedResponseConfig:
+              StatusCode: '200'
+              ContentType: text/plain
+              MessageBody: 'Healthy'
+    DSpaceLoadBalancerRule:
+      Type: AWS::ElasticLoadBalancingV2::ListenerRule
+      Properties:
+        Actions:
+          - TargetGroupArn: !Ref APITargetGroup
+            Type: forward
+        Conditions:
+          - Field: path-pattern
+            Values:
+                - /server/*
+                - /server
+        ListenerArn: !Ref ListenerHttps
+        Priority: 1
+    RedirectHttpToHttpsRule:
+      Type: AWS::ElasticLoadBalancingV2::ListenerRule
+      Properties:
+        Actions:
+          - Type: redirect
+            RedirectConfig:
+              Port: '443'
+              Protocol: HTTPS
+              StatusCode: HTTP_301
+        Conditions:
+          - Field: host-header
+            Values:
+              - !Ref DomainName
+          - Field: protocol
+            Values:
+              - HTTP
+        ListenerArn: !Ref ListenerHttp
+        Priority: 1
+  Outputs:
+    LoadBalancerDNSName:
+      Description: DNS name for the load balancer
+      Value: !GetAtt LoadBalancer.DNSName
+    LoadBalancerCanonicalHostedZoneID:
+      Description: Canonical hosted zone ID for the load balancer
+      Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
